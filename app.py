@@ -1,39 +1,45 @@
 import sqlite3
 import os
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, render_template_string, request, redirect
 
 app = Flask(__name__)
 DB_FILE = "database.db"
 
-# Initialize SQLite database and create a table for messages
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS messages (
+            CREATE TABLE IF NOT EXISTS guestbook (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                text TEXT NOT NULL
+                name TEXT NOT NULL,
+                message TEXT NOT NULL
             )
         """)
         conn.commit()
 
-# Serve your existing index.html file
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
-    return send_from_directory(os.getcwd(), "index.html")
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, message FROM guestbook ORDER BY id DESC")
+        entries = cursor.fetchall()
+    
+    with open("index.html", "r") as f:
+        html_content = f.read()
+        
+    return render_template_string(html_content, entries=entries)
 
-# An example API endpoint to save data to SQLite from your site
 @app.route("/submit", methods=["POST"])
 def submit():
-    data = request.get_json() or {}
-    message_text = data.get("message")
+    # This reads the 'name' attributes from your HTML form fields instead of JSON
+    username = request.form.get("username")
+    message = request.form.get("message")
     
-    if message_text:
+    if username and message:
         with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("INSERT INTO messages (text) VALUES (?)", (message_text,))
+            conn.execute("INSERT INTO guestbook (name, message) VALUES (?, ?)", (username, message))
             conn.commit()
-        return jsonify({"status": "success", "message": "Saved to SQLite!"})
-    
-    return jsonify({"status": "error", "message": "No text provided"}), 400
+            
+    return redirect("/")
 
 if __name__ == "__main__":
     init_db()
