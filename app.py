@@ -30,12 +30,12 @@ def home():
 
 @app.route("/submit", methods=["POST"])
 def submit():
-    # This reads the 'name' attributes from your HTML form fields instead of JSON
     username = request.form.get("username")
     message = request.form.get("message")
     
     if username and message:
         with sqlite3.connect(DB_FILE) as conn:
+            # This safely writes the two distinct text inputs into your SQLite columns
             conn.execute("INSERT INTO guestbook (name, message) VALUES (?, ?)", (username, message))
             conn.commit()
             
