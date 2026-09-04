@@ -38,10 +38,11 @@
         <textarea name="message" placeholder="Leave a comment..." required style="display:block; margin-bottom:10px; width:100%; padding:5px;"></textarea><br>
         <button type="submit" style="background-color: blue; color: white; border: none; padding: 10px 20px; cursor: pointer;">Post Message</button>
     </form>
-    <h3>Recent Messages:</h3>
+       <h3>Recent Messages:</h3>
     {% for entry in entries %}
-        <p style="border-left: 3px solid blue; padding-left: 10px;">
-            <strong>{{ entry[0] }}:</strong> {{ entry[1] }}
+        <p style="border-left: 3px solid blue; padding-left: 10px; margin-bottom: 10px;">
+            <strong style="color: #00a8ff;">{{ entry[0] }}:</strong> 
+            <span style="color: blue;">{{ entry[1] }}</span>
         </p>
     {% endfor %}
     <hr style="border-color: #333;">
