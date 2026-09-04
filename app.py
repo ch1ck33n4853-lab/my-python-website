@@ -16,26 +16,36 @@ def init_db():
         """)
         conn.commit()
 
-@app.route("/", methods=["GET"])
+@app.route("/", methods=["GET", "HEAD"])
 def home():
-    with sqlite3.connect(DB_FILE) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT name, message FROM guestbook ORDER BY id DESC")
-        entries = cursor.fetchall()
+    # Force initialize the database right here so it never errors out on page load
+    init_db()
     
-    with open("index.html", "r") as f:
-        html_content = f.read()
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name, message FROM guestbook ORDER BY id DESC")
+            entries = cursor.fetchall()
+    except Exception:
+        entries = []
+    
+    # Safely look for your HTML template file
+    if os.path.exists("index.html"):
+        with open("index.html", "r") as f:
+            html_content = f.read()
+    else:
+        html_content = "<h1>My Corner</h1><p>index.html was not found in directory.</p>"
         
     return render_template_string(html_content, entries=entries)
 
 @app.route("/submit", methods=["POST"])
 def submit():
+    init_db()
     username = request.form.get("username")
     message = request.form.get("message")
     
     if username and message:
         with sqlite3.connect(DB_FILE) as conn:
-            # This safely writes the two distinct text inputs into your SQLite columns
             conn.execute("INSERT INTO guestbook (name, message) VALUES (?, ?)", (username, message))
             conn.commit()
             
@@ -43,3 +53,4 @@ def submit():
 
 if __name__ == "__main__":
     init_db()
+
